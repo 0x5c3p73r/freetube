@@ -1,0 +1,27 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build unsigned IPA"
+  lane :build_unsign_ipa do
+    sh "cd .. && rm -rf Payload *.xcarchive *.ipa *.zip fastlane/*.xcarchive fastlane/*.ipa fastlane/*.zip || true"
+    build_app(
+      project: "FreeTube/FreeTube.xcodeproj",
+      scheme: "FreeTube",
+      destination: "generic/platform=iOS",
+      configuration: "Release",
+      codesigning_identity: "",
+      skip_codesigning: true,
+      skip_package_ipa: true,
+      archive_path: "App.xcarchive"
+    )
+    FastlaneCore::CommandExecutor.execute(
+      command: "cd .. && rm -rf Payload && if [ -d App.xcarchive ]; then mv App.xcarchive/Products/Applications ./Payload; elif [ -d fastlane/App.xcarchive ]; then mv fastlane/App.xcarchive/Products/Applications ./Payload; fi"
+    )
+    zip(
+      path: "./Payload",
+      output_path: "FreeTube"
+    )
+    sh "cd .. && if [ -f FreeTube.zip ]; then mv FreeTube.zip FreeTube.ipa; elif [ -f fastlane/FreeTube.zip ]; then mv fastlane/FreeTube.zip FreeTube.ipa; fi"
+    sh "cd .. && rm -rf Payload *.xcarchive *.zip fastlane/*.xcarchive fastlane/*.zip || true"
+  end
+end
